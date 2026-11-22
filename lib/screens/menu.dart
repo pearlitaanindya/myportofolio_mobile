@@ -11,7 +11,9 @@ class MyHomePage extends StatelessWidget {
 
   final List<ItemHomepage> items = [
     ItemHomepage("My Experiences", Icons.folder, const Color(0xFFA88ACD)),
+    ItemHomepage("My Education", Icons.folder, const Color(0xFFA88ACD)),
     ItemHomepage("Add Experience", Icons.add_circle, const Color(0xFFD9AC4E)),
+    ItemHomepage("Add Education", Icons.add_circle, const Color(0xFFD9AC4E)),
     ItemHomepage("Logout", Icons.logout, const Color(0xFFD47798)),
   ];
 
@@ -52,29 +54,30 @@ class MyHomePage extends StatelessWidget {
               Center(
                 child: Column(
                   children: [
-                    const Padding(
-                      padding: EdgeInsets.only(top: 16.0),
-                      child: Text(
-                        'Welcome to MyPortfolio Mobile!',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18.0,
-                        ),
-                      ),
+                    GridView.count(
+                      primary: false,
+                      padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      crossAxisCount: 2,
+                      childAspectRatio: 1.6,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      children: items
+                          .where((item) => item.name != "Logout")
+                          .map((item) => ItemCard(item))
+                          .toList(),
                     ),
 
-                    // GridView menampilkan kartu tombol dalam tata letak kisi 3 kolom.
-                    GridView.count(
-                      primary: true,
-                      padding: const EdgeInsets.all(20),
-                      crossAxisSpacing: 10,
-                      mainAxisSpacing: 10,
-                      crossAxisCount: 3,
-                      // shrinkWrap agar ukuran kisi menyesuaikan tinggi konten anak.
-                      shrinkWrap: true,
-                      children: items.map((ItemHomepage item) {
-                        return ItemCard(item);
-                      }).toList(),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 85,
+                        child: ItemCard(
+                          items.firstWhere((item) => item.name == "Logout"),
+                        ),
+                      ),
                     ),
                   ],
                 ),

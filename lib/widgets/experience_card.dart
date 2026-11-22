@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:myportofolio_mobile/screens/experience_form.dart';
+import 'package:myportofolio_mobile/screens/education_form.dart';
 
 class ItemHomepage {
   final String name;
@@ -26,6 +27,13 @@ class ItemCard extends StatelessWidget {
               context,
               MaterialPageRoute(
                 builder: (context) => const ExperienceFormPage(),
+              ),
+            );
+          } else if (item.name == "Add Education") {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const EducationFormPage(),
               ),
             );
           } else {
