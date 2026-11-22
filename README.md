@@ -7,7 +7,7 @@
 ### Deskripsi Proyek
 My Portofolio Mobile adalah aplikasi portofolio berbasis Flutter. Aplikasi ini merupakan pengembangan lanjutan dari website portofolio berbasis Django. Proyek portofolio yang berbasis website dikembangkan melalui Flutter menjadi aplikasi dengan antarmuka. 
 
-Pada tahap pengembangan sekarang, aplikasi telah menampilkan informasi identitas dan menyediakan 3 tombol fitur utama, yaitu My Experiences (untuk melihat experiences), Add Experience, dan Logout. Tiap menu memiliki warna yang berbeda dan dilengkapi dengan *SnackBar* sebagai umpan balik tiap kali pengguna menekan sebuah tombol. Namun, saat ini ketiga tombol tersebut masih berupa antarmuka interaktif sederhana dan belum terhubung dengan navigasi halaman ataupun backend Django.
+Pada tahap pengembangan sekarang, aplikasi telah menampilkan informasi identitas dan menyediakan lima menu fitur utama, yaitu My Experiences (untuk melihat experiences), Add Experience, My Education (untuk melihat education), Add Education, dan Logout. Tiap menu memiliki ikon dan warna yang berbeda sesuai fungsinya. Pengguna dapat mengakses formulir Add Experience dan Add Education melalui *card menu* pada halaman utama maupun melalui *Drawer*. Kedua formulir juga dilengkapi dengan validasi input, dialog ringkasan data, serta tombol save. Aplikasi ini juga dilengkapi dengan *SnackBar* sebagai umpan balik tiap kali pengguna menekan beberapa tombol. Namun, saat ini data yang dikirim melalui formulir belum disimpan ke database atau terhubung langsung dengan *baceknd* Django.
 
 ### Tugas 7
 1. *Widget tree* adalah struktur berbentuk hierarki yang menggambarkan susunan widget dalam aplikasi Flutter. Tiap widget dapat memiliki widget lain di dalamnya sehingga dapat membentuk hubungan antara *parent widget* dan *child widget*. Parent widget berperan sebagai wadah yang mengukur struktur, tata letak, ataupun karakteristik di dalamnya. *Child widget* adalah widget yang ditempatkan di dalam parent widget. Dengan struktur ini, antarmuka dapat dibangun dengan lebih sistematis karena menggunakan komponen-komponen yang saling terhubung.
@@ -59,3 +59,35 @@ Widget khusus yang dibuat:
 - **Keterbatasan AI & Perbaikan Mandiri:**
 1. Referensi dan penjelasan yang diberikan AI masih berupa panduan awal sehingga belum mencakup pembahasan mendalam dari setiap topik. Oleh karena itu, saya membaca dan memverifikasi informasi melalui dokumentasi resmi `Flutter` agar penjelasan yang digunakan lebih akurat.
 2. AI tidak dapat mengidentifikasi seluruh widget yang digunakan dalam karena AI tidak dapat mengakses *source code* aplikasi saya. Oleh karena itu, identifikasi widget yang benar-benar digunakan perlu dilakukan secara mandiri dengan memeriksa kode program, kemudian mencocokkan fungsi masing-masing widget dengan dokumentasi resmi Flutter.
+
+### Tugas 8
+1. `Navigator.push()`, `Navigator.pushReplacement()`, dan `Navigator.pop()` digunakan untuk mengatur navigasi antarhalaman dengan sistem *navigation stack*. `Navigator.push()` digunakan untuk menambahkan halaman baru tanpa menghapus halaman sebelumnya sehingga pengguna tetap dapat menggunakan tombol Back. Sementara itu, `Navigator.pushReplacement()` menggantikan halaman yang sedang aktif dengan halaman baru dan `Navigator.pop()` menghapus halaman teratas dari stack untuk kembali ke halaman sebelumnya. Pada tahap pengembangan ini, saya menggunakan `Navigator.push()` pada `ItemCard` untuk membuka formulir Add Experience dan Add Education. Sementara itu, opsi Home pada `LeftDrawer` menggunakan `Navigator.pushReplacement()` untuk mengganti halaman yang sedang ditampilkan dengan `MyHomePage()`. Metode `Navigator.pop()` juga digunakan untuk menutup drawer dan dialog setelah pengguna memencet OK.
+
+2. `Scaffold` adalah kerangka dasar halaman yang menyediakan tempat untuk `AppBar`, `Drawer`, dan `body`. `Appbar` digunakan untuk menampilkan judul halaman dan akses navigasi, `Drawer` digunakan untuk menyediakan menu untuk berpindah antarhalaman. Penggunaan ketiga widget tersebut membantu menjaga struktur aplikasi tetap konsisten karena pengguna menemukan susunan tampilan dan navigasi serupa pada tiap halaman. 
+
+Pada tahap pengembangan ini, digunakan `Scaffold` serta komponen `LeftDrawer` yang sama pad halaman Home, Add Experience, dan Add Education. Dari segi konsistensi warna, digunakan satu warna ungu yang sama (Color(0xFF8D70B5)) pada `AppBar` untuk formulir Add Experience dan Add Education serta pada *header* `Drawer`. Sementara itu, `AppBar` halaman Home mengambil warna melalui `Theme.of(context).colorScheme.primary`.
+
+3. Pada tahap pengembangan ini, saya menggunakan `Column` untuk menyusun input formulir secara vertikal agar pengguna dapat mengisi data secara berurut ke bawah. Susunan ini dipilih karena formulir Add Experience dan Add Education memiliki field yang lebih mudah dibaca saat ditampilkan dalam satu kolom. Selain itu, tata letak layar vertikal juga sesuai untuk layar perangkat mobile.
+
+Dari segi pengaturan jarak, saya menggunakan `Padding` agar formulir tak terlalu dekat dengan tepi layar dan `SizedBox` untuk memberikan jarak antarelemen input. Saya juga menggunakan `SingleChildScrollView` agar formulir dapat digulir ketika seluruh inpur tidak muat untuk berada di dalam layar, misalnya saat keyboard muncul atau aplikasi dijalankan pada perangkat dengan layar kecil. Dengan sistem ini, pengguna dapat menjangkau field dan tombol Save tanpa mengalami masalah konten yang terpotong.
+
+4. `GlobalKey<FormState>` digunakan untuk mengakses dan mengelola kondisi formulir termausk proses validasinya. Fungsi `validator` pada tiap input digunakan untuk memeriksa apakah nilai yang di-input sudah sesuai dengan aturan validasi. Ketika tombol Save ditekan, `_formKey.currentState!.validate()` akan menjalankan seluruh validator dan mengembalikan nilai `true` jika semua input valid atau `false` apabila masih ada kesalahan.Jika validasi berhasi, aplikasi akan menampilkan `AlertDialog` yang berisi ringkasan data yang telah di-input.
+
+Hal ini dapat ditemukan pada formulir Add Education dan Add Experience. Sebagai contoh, pada formulir Add Education, field *Degree* yang hanya berisi spasi akan ditolak karena validator menggunakan `value.trim().isEmpty` untuk memeriksa input kosong. Selain itu, tanggal selesai yang lebih awal dari pada tanggal mulai juga akan ditolak. Pemilihan jenis input seperti `TextInputType.numberWithOptions(decimal: true)` pada field GPA hanya membantu menampilkan keyboard yang sesuai. Akan tetapi, hal ini tidak menjamin bahwa nilai yan di-input merupakan nilai yang valid. Oleh karena itu, validasi tetap diperlukan untuk memeriksa nilai dan memastikan data memenuhi aturan formulir.
+
+#### AI Disclosure
+- **Tool yang digunakan:** ChatGPT
+
+- **Sesi percakapan:** https://chatgpt.com/share/6b02ca4e-74dc-83ec-99d5-0f95eb2693f1?ogimg=plain
+
+- **Strategi prompting:** Saya menggunakan Generative AI ChatGPT untuk membantu mengidentifikasi sumber referensi yang relevan dalam menjawab empat pertanyaan reflektif Tugas 8. Saya memberikan daftar pertanyaan yang mencakup navigasi antarhalaman menggunakan Navigator, penggunaan `Scaffold`, `AppBar`, dan `Drawer`, pengaturan tata letak formulir, serta validasi input menggunakan `GlobalKey<FormState>` dan validator. Selanjutnya, saya meminta AI untuk merekomendasikan sumber pembelajaran, terutama dokumentasi resmi Flutter, beserta penjelasan singkat mengenai materi yang dibahas dalam setiap sumber.
+
+- **Bagian spesifik yang dibantu:**
+1. Rekomendasi dokumentasi resmi Flutter untuk memahami perbedaan `Navigator.push()`, `Navigator.pushReplacement()`, dan `Navigator.pop()` dalam navigasi antarhalaman.
+2. Identifikasi referensi mengenai fungsi `Scaffold`, `AppBar`, `Drawer`, dan penggunaan tema untuk menjaga konsistensi tampilan aplikasi.
+3. Rekomendasi dokumentasi mengenai penggunaan `Column`, `Padding`, `SizedBox`, dan `SingleChildScrollView` dalam mengatur tata letak formulir.
+4. Identifikasi sumber untuk memahami fungsi `GlobalKey<FormState>`, validator, validate(), dan keyboardType dalam proses validasi input.
+
+- **Keterbatasan AI & Perbaikan Mandiri:**
+1. Referensi dan penjelasan yang diberikan AI masih bersifat umum sehingga belum sepenuhnya menjelaskan penerapan setiap konsep pada aplikasi saya. Oleh karena itu, saya menggunakan dokumentasi resmi Flutter sebagai acuan untuk memahami fungsi widget dan metode yang dibahas.
+2. AI memberikan beberapa alternatif implementasi navigasi dan contoh validasi yang belum tentu sesuai dengan kode aplikasi saya. Oleh karena itu, saya mencocokkan penjelasan tersebut dengan implementasi pada aplikasi My Portofolio Mobile, seperti penggunaan `Navigator.push()` pada kartu aksi, `Navigator.pushReplacement()` pada opsi `Home` di drawer, serta validasi input pada formulir Add Education.
