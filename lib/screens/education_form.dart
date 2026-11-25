@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:myportofolio_mobile/widgets/left_drawer.dart';
+import 'package:provider/provider.dart';
+
+import '../models/education.dart';
+import '../services/api_client.dart';
+import '../services/auth_state.dart';
+import '../widgets/auth_guard.dart';
+import 'education_list_page.dart';
 
 class EducationFormPage extends StatefulWidget {
   const EducationFormPage({super.key});
@@ -20,6 +27,8 @@ class _EducationFormPageState extends State<EducationFormPage> {
   DateTime? _startedAt;
   DateTime? _endedAt;
 
+  bool _isSubmitting = false;
+
   final _startController = TextEditingController();
   final _endController = TextEditingController();
 
@@ -30,11 +39,20 @@ class _EducationFormPageState extends State<EducationFormPage> {
     super.dispose();
   }
 
+  // format tanggal untuk tampilan form
   String _formatDate(DateTime? date) {
     if (date == null) return "Present";
     return "${date.day}/${date.month}/${date.year}";
   }
 
+  // format tanggal untuk dikirim ke Django
+  String _formatApiDate(DateTime date) {
+    return '${date.year}-'
+        '${date.month.toString().padLeft(2, '0')}-'
+        '${date.day.toString().padLeft(2, '0')}';
+  }
+
+  // tampilkan kalender untuk memilih tanggal
   Future<void> _selectDate(bool isStart) async {
     final selectedDate = await showDatePicker(
       context: context,
@@ -45,16 +63,127 @@ class _EducationFormPageState extends State<EducationFormPage> {
       lastDate: DateTime(2100),
     );
 
-    if (selectedDate != null) {
-      setState(() {
-        if (isStart) {
-          _startedAt = selectedDate;
-          _startController.text = _formatDate(selectedDate);
-        } else {
-          _endedAt = selectedDate;
-          _endController.text = _formatDate(selectedDate);
+    if (!mounted || selectedDate == null) return;
+
+    setState(() {
+      if (isStart) {
+        _startedAt = selectedDate;
+        _startController.text = _formatDate(selectedDate);
+      } else {
+        _endedAt = selectedDate;
+        _endController.text = _formatDate(selectedDate);
+      }
+    });
+  }
+
+  // kirim data Education ke Django
+  Future<void> _submit() async {
+    if (_isSubmitting) return;
+
+    // validasi seluruh input form
+    if (!_formKey.currentState!.validate()) return;
+
+    final startedAt = _startedAt;
+    final endedAt = _endedAt;
+
+    if (startedAt == null) return;
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      // pastikan pengguna sudah login
+      final loggedIn = await ensureLoggedIn(context);
+
+      if (!mounted || !loggedIn) return;
+
+      // ambil token dari AuthState
+      final token = context.read<AuthState>().token;
+
+      if (token == null) return;
+
+      // buat object Education dari data form
+      final newEducation = Education(
+        degree: _degree.trim(),
+        school: _school.trim(),
+        gpa: _gpa.trim().isEmpty ? null : _gpa.trim(),
+        thumbnail: _thumbnail.trim(),
+        startedAt: _formatApiDate(startedAt),
+        endedAt: endedAt == null ? null : _formatApiDate(endedAt),
+      );
+
+      // kirim data menggunakan POST
+      await context.read<ApiClient>().createEducation(
+        newEducation,
+        token: token,
+      );
+
+      if (!mounted) return;
+
+      // dialog hanya muncul jika POST berhasil
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: const Text('Education Saved'),
+            content: Text('$_degree has been successfully saved!'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (!mounted) return;
+
+      // buka daftar Education agar data terbaru langsung muncul
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const EducationListPage()),
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+
+      // token sudah tidak valid
+      if (e.statusCode == 401) {
+        try {
+          await context.read<AuthState>().logout();
+        } catch (_) {
+          // token lokal tetap dibersihkan.
         }
-      });
+
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Session expired. Please login again.')),
+        );
+
+        await ensureLoggedIn(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save education (${e.statusCode}).'),
+          ),
+        );
+      }
+    } catch (_) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Unable to connect to server.')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
     }
   }
 
@@ -128,9 +257,12 @@ class _EducationFormPageState extends State<EducationFormPage> {
                   decimal: true,
                 ),
                 inputFormatters: [
-                  FilteringTextInputFormatter.allow(
-                    RegExp(r'^\d{0,2}(\.\d{0,2})?$'),
-                  ),
+                  TextInputFormatter.withFunction((oldValue, newValue) {
+                    return RegExp(r'^\d{0,2}(\.\d{0,2})?$')
+                            .hasMatch(newValue.text)
+                        ? newValue
+                        : oldValue;
+                  }),
                 ],
                 onChanged: (value) {
                   _gpa = value;
@@ -145,6 +277,7 @@ class _EducationFormPageState extends State<EducationFormPage> {
                   if (gpa == null || gpa < 0 || gpa > 99.99) {
                     return "Enter a valid GPA!";
                   }
+
                   return null;
                 },
               ),
@@ -174,6 +307,7 @@ class _EducationFormPageState extends State<EducationFormPage> {
                       (uri.scheme != 'http' && uri.scheme != 'https')) {
                     return "Enter a valid URL!";
                   }
+
                   return null;
                 },
               ),
@@ -204,11 +338,21 @@ class _EducationFormPageState extends State<EducationFormPage> {
               TextFormField(
                 controller: _endController,
                 readOnly: true,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: "End Date (Optional)",
                   hintText: "Leave empty if ongoing",
-                  border: OutlineInputBorder(),
-                  suffixIcon: Icon(Icons.calendar_today),
+                  border: const OutlineInputBorder(),
+                  suffixIcon: _endedAt == null
+                      ? const Icon(Icons.calendar_today)
+                      : IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            setState(() {
+                              _endedAt = null;
+                              _endController.clear();
+                            });
+                          },
+                        ),
                 ),
                 onTap: () => _selectDate(false),
                 validator: (value) {
@@ -226,51 +370,21 @@ class _EducationFormPageState extends State<EducationFormPage> {
               // === Save Button ===
               Center(
                 child: ElevatedButton(
+                  onPressed: _isSubmitting ? null : _submit,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF8D70B5),
                     foregroundColor: Colors.white,
                   ),
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: const Text('Education Saved'),
-                            content: SingleChildScrollView(
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text('Degree: $_degree'),
-                                  Text('School: $_school'),
-                                  Text(
-                                    'GPA: ${_gpa.isEmpty ? "Not provided" : _gpa}',
-                                  ),
-                                  Text(
-                                    'Thumbnail: ${_thumbnail.isEmpty ? "Not provided" : _thumbnail}',
-                                  ),
-                                  Text(
-                                    'Start Date: ${_formatDate(_startedAt)}',
-                                  ),
-                                  Text('End Date: ${_formatDate(_endedAt)}'),
-                                ],
-                              ),
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                                child: const Text('OK'),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    }
-                  },
-                  child: const Text('Save'),
+                  child: _isSubmitting
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Save'),
                 ),
               ),
             ],
