@@ -1,4 +1,5 @@
 # My Portofolio Mobile
+[![CI](https://github.com/pearlitaanindya/myportofolio_mobile/actions/workflows/main.yaml/badge.svg?branch=main)](https://github.com/pearlitaanindya/myportofolio_mobile/actions/workflows/main.yaml)
 
 ## Nama: Pearlita Anindya Prameswari
 ## NPM: 2506547670
@@ -7,7 +8,99 @@
 ### Deskripsi Proyek
 My Portofolio Mobile adalah aplikasi portofolio berbasis Flutter. Aplikasi ini merupakan pengembangan lanjutan dari website portofolio berbasis Django. Proyek portofolio yang berbasis website dikembangkan melalui Flutter menjadi aplikasi dengan antarmuka. 
 
-Pada tahap pengembangan sekarang, aplikasi telah menampilkan informasi identitas dan menyediakan lima menu fitur utama, yaitu My Experiences (untuk melihat experiences), Add Experience, My Education (untuk melihat education), Add Education, dan Logout. Tiap menu memiliki ikon dan warna yang berbeda sesuai fungsinya. Pengguna dapat mengakses formulir Add Experience dan Add Education melalui *card menu* pada halaman utama maupun melalui *Drawer*. Kedua formulir juga dilengkapi dengan validasi input, dialog ringkasan data, serta tombol save. Aplikasi ini juga dilengkapi dengan *SnackBar* sebagai umpan balik tiap kali pengguna menekan beberapa tombol. Namun, saat ini data yang dikirim melalui formulir belum disimpan ke database atau terhubung langsung dengan *baceknd* Django.
+Pada tahap pengembangan sekarang, aplikasi telah terintegrasi dengan backend Django REST Framework. Pengguna dapat melihat daftar dan detail Experience dan Education tanpa login. Akan tetapi, penambahan data melalui formulir tetap memerlukan autentikasi berbasis token.
+
+Aplikasi juga telah dilengkapi validasi input, indikator loading, *pull-to-refresh*, penanganan error, dan mekanisme login kembali saat token sudah tidak valid. Selain itu, telah digunakan pula GitHub Actions sebagai pipeline CI/CD untuk menjalankan pemeriksaan kualitas kode, pengujian otomatis, dan menghasilkan APK release.
+
+### Setup dan Cara Menjalankan Aplikasi
+#### Prasyarat
+- Flutter SDK (stable channel)
+- Dart SDK
+- Git
+- Android Emulator, perangkat Android, atau Google Chrome
+
+#### Instalasi
+1. Clone repositori aplikasi.
+
+   ```bash
+   git clone https://github.com/pearlitaanindya/myportofolio_mobile.git
+   cd myportofolio_mobile
+   ```
+
+2. Instal dependencies.
+
+   ```bash
+   flutter pub get
+   ```
+
+3. Generate file serialisasi JSON.
+
+   ```bash
+   dart run build_runner build --delete-conflicting-outputs
+   ```
+
+   Perintah ini menghasilkan file `experience.g.dart` dan `education.g.dart` yang diperlukan untuk proses serialisasi dan deserialisasi JSON.
+
+#### Menjalankan Aplikasi
+Untuk menjalankan aplikasi menggunakan backend Django yang telah di-deploy:
+
+```bash
+flutter run --dart-define=API_BASE_URL=https://pearlita-anindya-myportofolio.pws.cs.ui.ac.id
+```
+
+Untuk menjalankan aplikasi melalui Chrome dengan backend Django lokal:
+
+```bash
+flutter run -d chrome --dart-define=API_BASE_URL=http://localhost:8000
+```
+
+Pastikan server Django lokal sudah berjalan dengan `python manage.py runserver`.
+
+#### Backend Django dan API
+- **Deployed Backend:** https://pearlita-anindya-myportofolio.pws.cs.ui.ac.id
+- **Repository Backend:** [(https://github.com/pearlitaanindya/myportofolio)]
+- **Experience API:** https://pearlita-anindya-myportofolio.pws.cs.ui.ac.id/api/v1/experience/
+- **Education API:** https://pearlita-anindya-myportofolio.pws.cs.ui.ac.id/api/v1/education/
+
+| Method | Endpoint | Autentikasi |
+|---|---|---|
+| GET | `/api/v1/experience/` | Publik |
+| POST | `/api/v1/experience/` | Token |
+| GET | `/api/v1/education/` | Publik |
+| POST | `/api/v1/education/` | Token |
+| POST | `/api/v1/auth/token/` | Username dan password |
+| POST | `/api/v1/auth/logout/` | Token |
+
+Operasi penambahan data hanya dapat dilakukan oleh pengguna yang memiliki token valid dan memenuhi permission yang ditetapkan pada backend.
+
+#### Automated Testing
+
+Pada Tugas 9, telah ditambahkan lima unit test dengan `MockClient` untuk menguji integrasi API Education, meliputi:
+
+1. Pengambilan daftar Education tanpa autentikasi dan deserialisasi JSON.
+2. Penanganan respons berupa daftar kosong.
+3. Pengiriman POST dengan token dan struktur JSON yang sesuai dengan serializer Django.
+4. Penanganan HTTP 401 melalui `ApiException`.
+5. Penanganan HTTP 500 melalui `ApiException`.
+
+Pengujian dapat dilakukan tanpa menjalankan server Django karena respons HTTP disimulasikan menggunakan `MockClient`.
+
+```bash
+flutter test test/education_api_test.dart
+```
+
+Untuk menjalankan seluruh pengujian dan pemeriksaan kualitas kode:
+
+```bash
+dart format --set-exit-if-changed lib test
+flutter analyze
+flutter test
+```
+
+#### CI/CD dan Release APK
+Pipeline CI/CD menggunakan GitHub Actions dan `very_good_workflows` untuk menjalankan pemeriksaan kualitas kode serta pengujian otomatis. Setelah pemeriksaan berhasil, job `build_apk` akan menghasilkan APK release yang dapat diunduh melalui bagian Artifacts pada halaman GitHub Actions dengan nama `app-release-apk`.
+
+**GitHub Actions:** https://github.com/pearlitaanindya/myportofolio_mobile/actions
 
 ### Tugas 7
 1. *Widget tree* adalah struktur berbentuk hierarki yang menggambarkan susunan widget dalam aplikasi Flutter. Tiap widget dapat memiliki widget lain di dalamnya sehingga dapat membentuk hubungan antara *parent widget* dan *child widget*. Parent widget berperan sebagai wadah yang mengukur struktur, tata letak, ataupun karakteristik di dalamnya. *Child widget* adalah widget yang ditempatkan di dalam parent widget. Dengan struktur ini, antarmuka dapat dibangun dengan lebih sistematis karena menggunakan komponen-komponen yang saling terhubung.
@@ -91,3 +184,31 @@ Hal ini dapat ditemukan pada formulir Add Education dan Add Experience. Sebagai 
 - **Keterbatasan AI & Perbaikan Mandiri:**
 1. Referensi dan penjelasan yang diberikan AI masih bersifat umum sehingga belum sepenuhnya menjelaskan penerapan setiap konsep pada aplikasi saya. Oleh karena itu, saya menggunakan dokumentasi resmi Flutter sebagai acuan untuk memahami fungsi widget dan metode yang dibahas.
 2. AI memberikan beberapa alternatif implementasi navigasi dan contoh validasi yang belum tentu sesuai dengan kode aplikasi saya. Oleh karena itu, saya mencocokkan penjelasan tersebut dengan implementasi pada aplikasi My Portofolio Mobile, seperti penggunaan `Navigator.push()` pada kartu aksi, `Navigator.pushReplacement()` pada opsi `Home` di drawer, serta validasi input pada formulir Add Education.
+
+### Tugas 9
+1. `@JsonSerializable(fieldRename: FieldRename.snake)` berfungsi untuk mempermudah konversi antar objek Dart dan data JSOn yang akan dikirim dan diterima melalui API. Penamaan field pada Dart umumnya dengan camelCase, sedangkan DRF menggunakan snake_case. Dengan anotasi tersebut, proses pemetaan nama field dapat dilakukan otomatis tanpa menuliskan tiap pasangan key-value secara manual. Di sisi lain, `@JsonKey(includeToJson: false)` digunakan agar field tertentu tetap dapat diterima dari backend tetapi tak ikut dikirim saat objek diubah menjadi JSON.
+
+Pada model `Education`, contoh penerapannya ada pada field `startedAt` yang secara otomatis dikonversi menjadi `started_at`. Jika menggunakan `Map<String, dynamic>` secara manual, terdapat kemungkinan terjadinya kesalahan penulisan key. Kesalahan ini dapat menyebabkan backend menganggap field tanggal mulai belum diisi dan mengembalikan respons HTTP 400. Selain itu, field `id, isOngoing, starCount, isStarred,` dan `starredByNames` menggunakan `includeToJson: false` karena nilai dari field tersebut ditentukan backend. Penggunaan model juga membantu memisahkan representasi data dari widget sehingga kode lebih terstruktur dan mudah dipelihara.
+
+2. `Future` yang diteruskan menuju `FutureBuilder` perlu diinisialisasi di dalam `initState()` karena metode tersebut hanya dijalankan satu kali ketika satte widget pertama kali dibuat sedangkan `build()` dapat menyebabkan request HTTP berulang dan pemborosan penggunaan jaringan. Pada `EducationListPage`, `_educationsFuture` diinisialisasi melalui `getEducations()` di dalam `initState()`, sedangkan pemanggilan ulang API dilakukan melalui `_reload()` saat pengguna melakukan *pull-to-request* atau menekan tombol Retry. `ApiException` digunakan agar aplikasi dapat membedakan kegagalan request dengan kondisi data kosong. Jika `ApiClient` hanya mengembalikan `null`, penyebab kegagalan akan lebih sulit diidentifikasi. Dengan menyimpan *status code* dan pesan respons dalam `ApiException`, aplikasi dapat memberi penanganan yang sesuai. 
+
+3. `SessionAuthentication` menggunakan *session cookied* untuk mengidentifikasi pengguna yang telah login dan perlindungan CSRF pada operasi yang mengubah data. Sementara itu, `TokenAuthentication` dengan token yang diperoleh setelah pengguna berhasil login. Token tersebut disertakan pada header `Authorization` tiap kali pengguna melakukan request yang perlu autentikasi. My Portofolio Mobile menggunakan `TokenAuthentication` karena aplikasi dapat berkomunikasi dengan backend tanpa bergantung pada *session cookie* yang dimiliki browser. Token disimpan sementara dalam `AuthState` dan digunakan sata melakukan `POST` Education melalui header `Authorization: Token <key>`. Di sisi lain, `SessionAuthentication` tetap diaktufkan agar autentikasi pada aplikasi web Django dapat berjalan seperti sebelumnya. `TokenAuthentication` ditempatkan sebelum `SessionAuthentication` agar request yang perlu autentikasi dengan token tidak valid atau tanpa autentikasi memperoleh respons HTTP 401.
+
+4. Job `build` memiliki peran dalam *Continuous Integration (CI)* dengan *reusable workflow* dari `very_good_workflows`. Langkahnya mencakup instalasi *dependencies*, *code generation*, pemeriksaan format, analisis statis, pengujian otomatis, dan pemeriksaan *coverage*. Pada konfigurasi aplikasi, `min_coverage` ditetapkan sebesar 0 dan file `*.g.dart` dikecualikan dari perhitungan coverage. Di sisi lain, job `build_apk` berperan dalam *Continuous Delivery (CD)* dan hanya akan dijalankan setelah job `build` berhasil melalui konfigurasi `needs: build.` Job ini melakukan *code generation*, membangun *APK release* dengan konfigurasi `API_BASE_URL`, dan mengunggah sebagai artefak `app-release.apk`. File `*.g.dart` dimasukkan ke `.gitignore` karena hasil *code generation*. Hal ini membantu menjaga *repository* tetap rapi, emngurangi konflik Git, dan mencegah ketidaksesuaian antara model dan file hasil generasi. File ini tetap tersedia saat dibutuhkan meski tidak disimpan pada *repository* karena kedua job CI/CD menjalankan `build_runner` untuk menghasilkannya kembali sebelum proses pemeriksaan ataupun build APK.
+
+#### AI Disclosure
+- **Tool yang digunakan:** ChatGPT
+
+- **Sesi percakapan:** https://chatgpt.com/share/6b06f266-3a08-83ec-9bc1-0565cbb7bbeb?ogimg=plain
+
+- **Strategi prompting:** Saya menggunakan Generative AI ChatGPT untuk membantu menyusun strategi pengerjaan Assignment 9, khususnya dalam menentukan struktur branching, urutan implementasi, serta waktu dan pesan commit yang sesuai. Saya memberikan deskripsi tugas beserta checklist pengerjaan kepada AI, kemudian menjelaskan bahwa integrasi backend pada bagian Experience telah dilakukan sebelumnya sehingga pengerjaan Assignment 9 berfokus pada bagian Education. Selanjutnya, saya meminta rekomendasi tahapan pengerjaan dengan memanfaatkan kembali pola implementasi Experience yang telah tersedia.
+
+- **Bagian spesifik yang dibantu:**
+1. Rekomendasi strategi branching menggunakan satu feature branch, yaitu feat/education-integration, untuk mengelola seluruh proses integrasi Education.
+2. Rekomendasi pembagian commit berdasarkan tahapan pengerjaan serta penggunaan conventional commits agar riwayat perubahan kode lebih terstruktur.
+3. Rekomendasi pemeriksaan sebelum pengumpulan, termasuk pengecekan file hasil code generation, konfigurasi API_BASE_URL, keberhasilan CI/CD, dan ketersediaan artefak APK.
+
+- **Keterbatasan AI & Perbaikan Mandiri:**
+1. Rekomendasi awal AI masih bersifat umum karena belum mempertimbangkan bahwa integrasi `Experience` telah dilakukan pada Tutorial 10. Oleh karena itu, saya memberikan konteks tambahan agar strategi *branching* dan tahapan pengerjaan disesuaikan dengan integrasi `Education`.
+2. Pembagian tahapan dan commit yang disarankan AI tidak sepenuhnya sesuai dengan kebutuhan aktual selama pengerjaan. Oleh karena itu, saya menyesuaikan pembagian commit berdasarkan perubahan kode yang saling berkaitan dan hasil pengujian pada setiap tahapan.
+3. AI tidak dapat memverifikasi secara langsung kondisi *repository* maupun keberhasilan integrasi pada lingkungan pengembangan lokal saya. Oleh karena itu, saya melakukan pemeriksaan melalui `flutter analyze`, `flutter test`, pengujian langsung pada aplikasi, serta pengecekan hasil GitHub Actions.
