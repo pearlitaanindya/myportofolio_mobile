@@ -3,6 +3,7 @@ import 'package:myportofolio_mobile/screens/experience_form.dart';
 import 'package:myportofolio_mobile/screens/education_form.dart';
 import 'package:provider/provider.dart';
 
+import '../screens/education_list_page.dart';
 import '../screens/experience_list_page.dart';
 import '../services/auth_state.dart';
 import 'auth_guard.dart';
@@ -27,6 +28,7 @@ class ItemCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         onTap: () async {
+          // membuka daftar Experience
           if (item.name == "My Experiences") {
             Navigator.push(
               context,
@@ -34,6 +36,17 @@ class ItemCard extends StatelessWidget {
                 builder: (context) => const ExperienceListPage(),
               ),
             );
+
+            // membuka daftar Education tanpa login
+          } else if (item.name == "My Education") {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const EducationListPage(),
+              ),
+            );
+
+            // membuka form Experience dengan autentikasi
           } else if (item.name == "Add Experience") {
             final loggedIn = await ensureLoggedIn(context);
 
@@ -45,6 +58,8 @@ class ItemCard extends StatelessWidget {
                 builder: (context) => const ExperienceFormPage(),
               ),
             );
+
+            // membuka form Education dengan autentikasi
           } else if (item.name == "Add Education") {
             final loggedIn = await ensureLoggedIn(context);
 
@@ -56,8 +71,12 @@ class ItemCard extends StatelessWidget {
                 builder: (context) => const EducationFormPage(),
               ),
             );
+
+            // login
           } else if (item.name == "Login") {
             await ensureLoggedIn(context);
+
+            // logout
           } else if (item.name == "Logout") {
             final auth = context.read<AuthState>();
 

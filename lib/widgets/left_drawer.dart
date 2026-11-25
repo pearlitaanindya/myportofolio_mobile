@@ -4,6 +4,7 @@ import 'package:myportofolio_mobile/screens/experience_form.dart';
 import 'package:myportofolio_mobile/screens/education_form.dart';
 import 'package:provider/provider.dart';
 
+import '../screens/education_list_page.dart';
 import '../screens/experience_list_page.dart';
 import '../services/auth_state.dart';
 import 'auth_guard.dart';
@@ -34,7 +35,10 @@ class LeftDrawer extends StatelessWidget {
                 SizedBox(height: 10),
                 Text(
                   'Explore my journey!',
-                  style: TextStyle(fontSize: 15, color: Colors.white),
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Colors.white,
+                  ),
                 ),
               ],
             ),
@@ -48,7 +52,9 @@ class LeftDrawer extends StatelessWidget {
               final navigator = Navigator.of(context);
               navigator.pop();
               navigator.pushReplacement(
-                MaterialPageRoute(builder: (context) => MyHomePage()),
+                MaterialPageRoute(
+                  builder: (context) => MyHomePage(),
+                ),
               );
             },
           ),
@@ -63,6 +69,21 @@ class LeftDrawer extends StatelessWidget {
               navigator.pushReplacement(
                 MaterialPageRoute(
                   builder: (context) => const ExperienceListPage(),
+                ),
+              );
+            },
+          ),
+
+          // My Education
+          ListTile(
+            leading: const Icon(Icons.list),
+            title: const Text('My Education'),
+            onTap: () {
+              final navigator = Navigator.of(context);
+              navigator.pop();
+              navigator.pushReplacement(
+                MaterialPageRoute(
+                  builder: (context) => const EducationListPage(),
                 ),
               );
             },
@@ -133,7 +154,9 @@ class LeftDrawer extends StatelessWidget {
                 if (!context.mounted) return;
 
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('You are logged out.')),
+                  const SnackBar(
+                    content: Text('You are logged out.'),
+                  ),
                 );
               },
             ),
