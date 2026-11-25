@@ -35,10 +35,7 @@ class LeftDrawer extends StatelessWidget {
                 SizedBox(height: 10),
                 Text(
                   'Explore my journey!',
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Colors.white,
-                  ),
+                  style: TextStyle(fontSize: 15, color: Colors.white),
                 ),
               ],
             ),
@@ -52,9 +49,7 @@ class LeftDrawer extends StatelessWidget {
               final navigator = Navigator.of(context);
               navigator.pop();
               navigator.pushReplacement(
-                MaterialPageRoute(
-                  builder: (context) => MyHomePage(),
-                ),
+                MaterialPageRoute(builder: (context) => MyHomePage()),
               );
             },
           ),
@@ -154,9 +149,7 @@ class LeftDrawer extends StatelessWidget {
                 if (!context.mounted) return;
 
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('You are logged out.'),
-                  ),
+                  const SnackBar(content: Text('You are logged out.')),
                 );
               },
             ),
